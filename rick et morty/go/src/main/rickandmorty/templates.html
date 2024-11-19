@@ -1,0 +1,34 @@
+func handleAllCharacters(w http.ResponseWriter, r *http.Request) {
+	characters, err := fetchAllCharacters()
+	if err != nil {
+		http.Error(w, "Erreur lors de la récupération des personnages", http.StatusInternalServerError)
+		return
+	}
+
+	tmpl := `
+	<!DOCTYPE html>
+	<html>
+	<head>
+		<title>Rick and Morty - Tous les personnages</title>
+	</head>
+	<body>
+		<h1>Liste des personnages</h1>
+		<ul>
+			{{range .}}
+			<li>
+				<img src="{{.Image}}" alt="{{.Name}}" style="width:50px;height:50px;">
+				<strong>{{.Name}}</strong> - {{.Species}} ({{.Status}})
+			</li>
+			{{end}}
+		</ul>
+	</body>
+	</html>
+	`
+	tmplParsed, err := template.New("characters").Parse(tmpl)
+	if err != nil {
+		http.Error(w, "Erreur de parsing du template", http.StatusInternalServerError)
+		return
+	}
+
+	tmplParsed.Execute(w, characters)
+}

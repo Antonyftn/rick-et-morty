@@ -1,0 +1,45 @@
+func handleCharacterByID(w http.ResponseWriter, r *http.Request) {
+	// Récupérer l'ID depuis la query string
+	ids := r.URL.Query().Get("id")
+	if ids == "" {
+		http.Error(w, "ID de personnage manquant", http.StatusBadRequest)
+		return
+	}
+
+	var id int
+	_, err := fmt.Sscanf(ids, "%d", &id)
+	if err != nil {
+		http.Error(w, "ID invalide", http.StatusBadRequest)
+		return
+	}
+
+	character, err := fetchCharacterByID(id)
+	if err != nil {
+		http.Error(w, "Erreur lors de la récupération du personnage", http.StatusInternalServerError)
+		return
+	}
+
+	tmpl := `
+	<!DOCTYPE html>
+	<html>
+	<head>
+		<title>Rick and Morty - {{.Name}}</title>
+	</head>
+	<body>
+		<h1>{{.Name}}</h1>
+		<img src="{{.Image}}" alt="{{.Name}}">
+		<p><strong>Statut :</strong> {{.Status}}</p>
+		<p><strong>Espèce :</strong> {{.Species}}</p>
+		<p><strong>Genre :</strong> {{.Gender}}</p>
+		<p><strong>Origine :</strong> {{.Origin.Name}}</p>
+	</body>
+	</html>
+	`
+	tmplParsed, err := template.New("character").Parse(tmpl)
+	if err != nil {
+		http.Error(w, "Erreur de parsing du template", http.StatusInternalServerError)
+		return
+	}
+
+	tmplParsed.Execute(w, character)
+}
